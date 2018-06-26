@@ -1,3 +1,5 @@
+import libaddapy
+
 def drdy_is_low():
     libaddapy.gpio_lev(libaddapy.DRDY)
     return
@@ -11,7 +13,7 @@ def ads1256_readreg(_regid):
     ads1256_send8bit(libaddapy.CMD_RREG | _regid)
     ads1256_send8bit(0x00)
 
-    ads1256_delaydata()
+    # ads1256_delaydata()
 
     read = ads1256_recive8bit()
     cs_1()
@@ -24,13 +26,13 @@ def ads1256_readchipid():
     return id >> 4
 
 def cs_0():
-    libaddapy.gpio_write(libaddapy.SPICS, libaddapy.HIGH)
-
-def cs_1():
     libaddapy.gpio_write(libaddapy.SPICS, libaddapy.LOW)
 
+def cs_1():
+    libaddapy.gpio_write(libaddapy.SPICS, libaddapy.HIGH)
+
 def ads1256_send8bit(_data):
-    bsp_delay(2)
+    # bsp_delayus(2)
     libaddapy.spi_transfer(_data)
 
 def bsp_delayus(micros):

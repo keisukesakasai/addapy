@@ -1,7 +1,8 @@
 import os
 import ctypes
 
-DRDY = 17
+DRDY = 17 # RPI_GPIO_P1_11
+SPICS = 22 # RPI_GPIO_P1_15
 
 CMD_RREG = 0x10
 
