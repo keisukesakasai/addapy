@@ -11,6 +11,13 @@ REG_STATUS =0
 HIGH = 1
 LOW = 0
 
+BCM2835_SPI_BIT_ORDER_LSBFIRST = 0
+BCM2835_SPI_BIT_ORDER_MSBFIRST = 1
+BCM2835_SPI_MODE1 = 1
+BCM2835_SPI_CLOCK_DIVIDER_1024 = 1024
+BCM2835_GPIO_FSEL_INPT = 0x00
+BCM2835_GPIO_FSEL_OUTP = 0x01
+BCM2835_GPIO_PUD_UP = 0x02
 
 SO_DIR = '/usr/local/lib'
 SO_NAME = 'libbcm2835.so'
@@ -28,6 +35,7 @@ init.restype = _int
 
 # void bcm2835_spi_begin(  );
 # ---------------------------
+spi_begin = lib.bcm2835_spi_begin
 
 # void bcm2835_spi_setBitOrder( uint16_t );
 # -----------------------------------------
