@@ -5,8 +5,15 @@ DRDY = 17 # RPI_GPIO_P1_11
 SPICS = 22 # RPI_GPIO_P1_15
 
 CMD_RREG = 0x10
+CMD_WREG = 0x50
+CMD_SYNC = 0xfc
+CMD_WAKEUP = 0x00
+CMD_RDATA = 0x01
 
-REG_STATUS =0
+REG_STATUS = 0
+REG_MUX = 1
+
+
 
 HIGH = 1
 LOW = 0
@@ -84,3 +91,10 @@ spi_transfer = lib.bcm2835_spi_transfer
 spi_transfer.restype = _uint
 spi_transfer.argtypes = {_uint}
 
+# void bcm2835_spi_end ( void )
+# -----------------------------
+spi_end = lib.bcm2835_spi_end
+
+# int bcm2835_spi_close ( void )
+spi_close = lib.bcm2835_spi_close
+spi_close.restype = _uint
