@@ -2,11 +2,18 @@ import libaddapy
 
 def configure():
     libaddapy.init()
+<<<<<<< HEAD
     libaddapy.spi_begin()
     libaddapy.spi_setBitOrder(libaddapy.BCM2835_SPI_BIT_ORDER_LSBFIRST)
     libaddapy.spi_setDataMode(libaddapy.BCM2835_SPI_MODE1)
     libaddapy.spi_setClockDivider(libaddapy.BCM2835_SPI_CLOCK_DIVIDER_1024)
     libaddapy.gpio_fsel(libaddapy.SPICS, libaddapy.BCM2835_GPIO_FSEL_OUTP)
+=======
+    libaddapy.spi_setbitorder(libaddapy.BCM2835_SPI_BIT_ORDER_LSBFIRST)
+    libaddapy.spi_setdatamode(libaddapy.BCM2835_SPI_MODE1)
+    libaddapy.spi_setclockdivider(libaddapy.BCM2835_SPI_CLOCK_DIVIDER_1024)
+    libaddapy.gpio_fsel(libaddapy.SPICS, BCM2835_GPIO_FSEL_OUTP)
+>>>>>>> 47bb6bf2fe76489d70234fa530ce5a6cafb95847
     libaddapy.gpio_write(libaddapy.SPICS, libaddapy.HIGH)
     libaddapy.gpio_fsel(libaddapy.DRDY, libaddapy.BCM2835_GPIO_FSEL_INPT)
     libaddapy.gpio_set_pud(libaddapy.DRDY, libaddapy.BCM2835_GPIO_PUD_UP)
