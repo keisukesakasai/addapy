@@ -95,6 +95,6 @@ spi_transfer.argtypes = {_uint}
 # -----------------------------
 spi_end = lib.bcm2835_spi_end
 
-# int bcm2835_spi_close ( void )
-spi_close = lib.bcm2835_spi_close
-spi_close.restype = _uint
+# int bcm2835_close ( void )
+close = lib.bcm2835_close
+close.restype = _uint

@@ -1,4 +1,6 @@
+import time
 import collections
+
 import libaddapy
 
 ADS1256_VAR_T = collections.namedtuple('ADS1256_VAR_T',
@@ -91,9 +93,19 @@ def ads1256_recive8bit():
     read = libaddapy.spi_transfer(0xff)
     return read
     
-def ads1256_cfgadc(_gain=ADS1256_GAIN_1['ADS1256_GAIN_1'], _drate=ADS1256_DRATE_E['ADS1256_15SPS']):
+def ads1256_cfgadc(_gain=ADS1256_GAIN_E['ADS1256_GAIN_1'], _drate=ADS1256_DRATE_E['ADS1256_15SPS']):
+    d = {}
+    d['ADS1256_GAIN_E'] = _gain
+    d['ADS1256_DRATE_E'] = _drate
+    d['ScanMode'] = None
+    d['Channel'] = None
+    d['AdcNow'] = None
+    config = ADS1256_VAR_T(**d)
+    
+    '''
     ADS1256_VAR_T.ADS1256_GAIN_E = _gain
     ADS1256_VAR_T.ADS1256_DRATE_E = _drate
+    '''
 
     # ads1256_wait_drdy()
 
@@ -101,7 +113,7 @@ def ads1256_cfgadc(_gain=ADS1256_GAIN_1['ADS1256_GAIN_1'], _drate=ADS1256_DRATE_
     buf[0] = (0 << 3) | (1 << 2) | (0 << 1)
     buf[1] = 0x08
     buf[2] = (0 << 5) | (0 << 3) | (_gain << 0)
-    buf[3] = s_tabDataRate[_drate]
+    buf[3] = _drate
 
     cs_0()
     ads1256_send8bit(libaddapy.CMD_WREG | 0)
@@ -114,25 +126,83 @@ def ads1256_cfgadc(_gain=ADS1256_GAIN_1['ADS1256_GAIN_1'], _drate=ADS1256_DRATE_
 
     cs_1()
 
+    return config
+
     # bsp_delayus(50)
 
-def ads1256_startscan(_ucstanmode=0):
-    ADS1256_VAR_T.ScanMode = _ucstanmode
+def ads1256_startscan(_ucscanmode=0, config={}):
+    d = {}
+    d['ADS1256_GAIN_E'] = config.ADS1256_GAIN_E
+    d['ADS1256_DRATE_E'] = config.ADS1256_DRATE_E
+    d['ScanMode'] = _ucscanmode
+    d['Channel'] = 0
+    d['AdcNow'] = [0 for i in range(8)]
+    config = ADS1256_VAR_T(**d)
+
+    return config
+
+    '''
+    ADS1256_VAR_T.ScanMode = _ucscanmode
     ADS1256_VAR_T.Channel = 0
     ADS1256_VAR_T.AdcNow = []
 
     for i in range(8):
         ADS1256_VAR_T.AdcNow.append(0)
+    '''
 
-def ads1256_scan():
+def ads1256_scan(config={}):
     if drdy_is_low:
-        ads1256_isr()
+        config = ads1256_isr(config)
 
-        return 1
+        return config
 
-    return0
+    return 0
 
-def ads1256_isr():
+def ads1256_isr(config={}):
+    if config.ScanMode == 0:
+        ads1256_setchannel(config.Channel)
+        # bsp_delayus(5)
+
+        ads1256_writecmd(libaddapy.CMD_SYNC)
+        # bsp_delayus(5)
+
+        ads1256_writecmd(libaddapy.CMD_WAKEUP)
+        # bsp_delayus(25)
+
+        if config.Channel == 0:
+            config.AdcNow[7] = ads1256_readdata()
+
+        else:
+            config.AdcNow[config.Channel-1] = ADS1256_readdata()
+
+        if config.Channel >= 8:
+            config.Channel = 0
+
+        return config
+            
+
+    else:
+        ads1256_setdiffchannel(config.Channel)
+        # bsp_delayus(5)
+
+        ads1256_writecmd(libaddapy.CMD_SYNC)
+        # bsp_delayus(5)
+
+        ads1256_writecmd(libaddapy.CMD_WAKEUP)
+        # bsp_delayus(25)
+
+        if config.Channel == 0:
+            config.AdcNow[3] = ads1256_readdata()
+
+        else:
+            config.AdcNow[config.Channel-1] = ads1256_readdata()
+
+        if config.Channel >= 4:
+            config.Channel = 0
+
+        return config
+
+    '''
     if ADS1256_VAR_T.ScanMode == 0:
         ads1256_setchannel(ADS1256_VAR_T.Channel)
         # bsp_delayus(5)
@@ -153,7 +223,7 @@ def ads1256_isr():
             ADS1256_VAR_T.Channel = 0
 
     else:
-        ADS1256_setdiffchannel(ADS1256_VAR_T.Channel)
+        ads1256_setdiffchannel(ADS1256_VAR_T.Channel)
         # bsp_delayus(5)
 
         ads1256_writecmd(libaddapy.CMD_SYNC)
@@ -166,11 +236,12 @@ def ads1256_isr():
             ADS1256_VAR_T.AdcNow[3] = ads1256_readdata()
 
         else:
-            ADS1256_VAR_T.AdcNow[ADS1256_VAR_T.Channel-1] = ADS1256_readdata()
+            ADS1256_VAR_T.AdcNow[ADS1256_VAR_T.Channel-1] = ads1256_readdata()
 
         if ADS1256_VAR_T.Channel >= 4:
             ADS1256_VAR_T.Channel = 0
-
+    '''
+    
     return
     
 def ads1256_setchannel(_ch=0):
@@ -198,7 +269,8 @@ def ads1256_readdata():
     cs_1()
 
     if read & 0x800000: read |= 0xFF000000
-        return read
+
+    return read
         
 
 def ads1256_setdiffchannel(_ch):
@@ -224,55 +296,63 @@ def ads1256_writereg(_regid, _regvalue):
     ads1256_send8bit(_regvalue)
     cs_1()
 
-def ads1256_getadc(_ch):
+def ads1256_getadc(_ch, config={}):
     iTemp = 0
 
     if _ch > 7: return 0
 
-    iTemp = ADS1256_VAR_T.AdcNow[_ch]
+    iTemp = config.AdcNow[_ch]
+    # iTemp = ADS1256_VAR_T.AdcNow[_ch]
 
     return iTemp
 
-if __init__ = '__main__':
+def ads1256_writecmd(_cmd):
+    cs_0()
+    ads1256_send8bit(_cmd)
+    cs_1()
+
+if __name__ == '__main__':
     ch_num = 8
     adc = [_ for _ in range(8)]
     volt = [_ for _ in range(8)]
     iTemp = 0
     buf = [[], [], []]
     
-    if configure(): return
+    configure()
     # else: raise InvalidAccessError
-    id = ads1256_readchipid
+    id = ads1256_readchipid()
+    print('id = {}'.format(id))
 
-    if id == 0x11:
-        ads1256_cfgadc(_gain=ADS1256_GAIN_E['ADS1256_GAIN_1'], _drate=ADS1256_DRATE_E['ADS126_15SPS'])
-        ads1256_startscan(0)
+    if id == 0x03:
+        config = ads1256_cfgadc(_gain=ADS1256_GAIN_E['ADS1256_GAIN_1'], _drate=ADS1256_DRATE_E['ADS1256_15SPS'])
+        config = ads1256_startscan(0, config)
 
         while 1:
-            while ads1256_scan() == 0:
-                for i in range(ch_num):
-                    adc[i] = ads1256_getadc(i)
+            # while ads1256_scan(config) == 1:
+            config = ads1256_scan(config)
+            print(config)
+            for i in range(ch_num):
+                adc[i] = ads1256_getadc(i, config)
                 volt[i] = adc[i] * 100 / 167
+            print(adc)
+            print(volt)
+            for i in range(ch_num):
+                buf[0] = (adc[i] >> 16) & 0xFF
+                buf[1] = (adc[i] >> 8) & 0xFF
+                buf[2] = (adc[i] >> 0) & 0xFF
+                
+                print('{0}={1}{2}{3}, {4}'.format(i,
+                                                  round(buf[0], 2),
+                                                  round(buf[1], 2),
+                                                  round(buf[2], 2),
+                                                  round(adc[i], 8)))
+                iTemp = volt[i]
 
-                for i in range(ch_num):
-                    buf[0] = (adc[i] >> 16) & 0xFF
-                    buf[1] = (adc[i] >> 8) & 0xFF
-                    buf[2] = (adc[i] >> 0) & 0xFF
+                if iTemp < 0:
+                    iTemp = -iTemp
+                    print('(-{0}.{1} {2} V) \r\n'.format(iTemp/1000000, (iTemp%1000000)/1000, iTemp%1000))
+                else: print('{0}.{1} {2} V) \r\n'.format(iTemp/1000000, (iTemp%1000000)/1000, iTemp%1000))
 
-                    print('{0}={1}{2}{3}, {4}'.format(i,
-                                                      round(buf[0], 2),
-                                                      round(buf[1], 2),
-                                                      round(buf[2], 2),
-                                                      round(adc[i], 8)))
-                    iTemp = volt[i]
-
-                    if iTemp < 0: iTemp = -iTemp
-                        print('(-{0}.{1} {2} V) \r\n'.format(iTemp/1000000, (iTemp%1000000)/1000, iTemp%1000))
-                    else: print('{0}.{1} {2} V) \r\n'.format(iTemp/1000000, (iTemp%1000000)/1000, iTemp%1000))
-
-                bsp_delayus(100000)
-
-    libaddapy.spi.end()
-    libaddapy.spi.close()
-
-    return
+                time.sleep(3)
+    libaddapy.spi_end()
+    libaddapy.close()
