@@ -1,2 +1,2 @@
-from . import addapy.py
-from . import libaddapy.py
+from . import ads1256.py
+from . import libads1256.py
