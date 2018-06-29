@@ -328,7 +328,7 @@ def ads1256_writecmd(_cmd):
     ads1256_send8bit(_cmd)
     cs_1()
 
-def ads1256_test_adc():
+def ads1256_adc():
     d = {}
     ch_num = 8
     adc = [0 for _ in range(8)]
@@ -373,7 +373,7 @@ if __name__ == '__main__':
                          'Satrt ADC...\n\n\n')
         try:
             while True:
-                d = ads1256_test_adc()
+                d = ads1256_adc()
                 '''
                 sys.stdout.write('\rCH1 : {0} V'.format(d['CH1']))
                 sys.stdout.write('\rCH2 : {0} V'.format(d['CH2']))
