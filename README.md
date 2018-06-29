@@ -21,7 +21,7 @@ CH8 : 1.1978 V
 =======================
 ```
 
--　interpreter
+- interpreter
 ```python
 import ads1256
 
