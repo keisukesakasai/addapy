@@ -2,7 +2,7 @@ import time
 import sys
 import collections
 
-import libaddapy
+import libads1256
 
 ADS1256_VAR_T = collections.namedtuple('ADS1256_VAR_T',
                                        ['ADS1256_GAIN_E',
@@ -37,15 +37,15 @@ ADS1256_DRATE_E = {'ADS1256_30000SPS':0xf0,
                    'ADS1256_2d5SPS':0x03}
 
 def configure():
-    libaddapy.init()
-    libaddapy.spi_begin()
-    libaddapy.spi_setBitOrder(libaddapy.BCM2835_SPI_BIT_ORDER_LSBFIRST)
-    libaddapy.spi_setDataMode(libaddapy.BCM2835_SPI_MODE1)
-    libaddapy.spi_setClockDivider(libaddapy.BCM2835_SPI_CLOCK_DIVIDER_1024)
-    libaddapy.gpio_fsel(libaddapy.SPICS, libaddapy.BCM2835_GPIO_FSEL_OUTP)
-    libaddapy.gpio_write(libaddapy.SPICS, libaddapy.HIGH)
-    libaddapy.gpio_fsel(libaddapy.DRDY, libaddapy.BCM2835_GPIO_FSEL_INPT)
-    libaddapy.gpio_set_pud(libaddapy.DRDY, libaddapy.BCM2835_GPIO_PUD_UP)
+    libads1256.init()
+    libads1256.spi_begin()
+    libads1256.spi_setBitOrder(libads1256.BCM2835_SPI_BIT_ORDER_LSBFIRST)
+    libads1256.spi_setDataMode(libads1256.BCM2835_SPI_MODE1)
+    libads1256.spi_setClockDivider(libads1256.BCM2835_SPI_CLOCK_DIVIDER_1024)
+    libads1256.gpio_fsel(libads1256.SPICS, libads1256.BCM2835_GPIO_FSEL_OUTP)
+    libads1256.gpio_write(libads1256.SPICS, libads1256.HIGH)
+    libads1256.gpio_fsel(libads1256.DRDY, libads1256.BCM2835_GPIO_FSEL_INPT)
+    libads1256.gpio_set_pud(libads1256.DRDY, libads1256.BCM2835_GPIO_PUD_UP)
     return
 
 def ussleep(_t = 0):
@@ -54,7 +54,7 @@ def ussleep(_t = 0):
     return
 
 def drdy_is_low():
-    libaddapy.gpio_lev(libaddapy.DRDY)
+    libads1256.gpio_lev(libads1256.DRDY)
     return
 
 def ads1256_wait_drdy():
@@ -63,7 +63,7 @@ def ads1256_wait_drdy():
 
 def ads1256_readreg(_regid):
     cs_0()
-    ads1256_send8bit(libaddapy.CMD_RREG | _regid)
+    ads1256_send8bit(libads1256.CMD_RREG | _regid)
     ads1256_send8bit(0x00)
 
     # ads1256_delaydata()
@@ -76,29 +76,29 @@ def ads1256_readreg(_regid):
 
 def ads1256_readchipid():
     ads1256_wait_drdy()
-    id = ads1256_readreg(libaddapy.REG_STATUS)
+    id = ads1256_readreg(libads1256.REG_STATUS)
     return id >> 4
 
 def cs_0():
-    libaddapy.gpio_write(libaddapy.SPICS, libaddapy.LOW)
+    libads1256.gpio_write(libads1256.SPICS, libads1256.LOW)
 
 def cs_1():
-    libaddapy.gpio_write(libaddapy.SPICS, libaddapy.HIGH)
+    libads1256.gpio_write(libads1256.SPICS, libads1256.HIGH)
 
 def ads1256_send8bit(_data):
     # bsp_delayus(2)
     ussleep(2000)
     
-    libaddapy.spi_transfer(_data)
+    libads1256.spi_transfer(_data)
 
 def bsp_delayus(micros):
-    libaddapy.delayMicroseconds(micros)
+    libads1256.delayMicroseconds(micros)
 
 def ads1256_delaydata():
     bsp_delayus(100000)
 
 def ads1256_recive8bit():
-    read = libaddapy.spi_transfer(0xff)
+    read = libads1256.spi_transfer(0xff)
     return read
     
 def ads1256_cfgadc(_gain=ADS1256_GAIN_E['ADS1256_GAIN_1'], _drate=ADS1256_DRATE_E['ADS1256_15SPS']):
@@ -124,7 +124,7 @@ def ads1256_cfgadc(_gain=ADS1256_GAIN_E['ADS1256_GAIN_1'], _drate=ADS1256_DRATE_
     buf[3] = _drate
 
     cs_0()
-    ads1256_send8bit(libaddapy.CMD_WREG | 0)
+    ads1256_send8bit(libads1256.CMD_WREG | 0)
     ads1256_send8bit(0x03)
 
     ads1256_send8bit(buf[0])
@@ -174,11 +174,11 @@ def ads1256_isr(config={}):
         # bsp_delayus(5)
         ussleep(5000)
 
-        ads1256_writecmd(libaddapy.CMD_SYNC)
+        ads1256_writecmd(libads1256.CMD_SYNC)
         # bsp_delayus(5)
         ussleep(50000)
 
-        ads1256_writecmd(libaddapy.CMD_WAKEUP)
+        ads1256_writecmd(libads1256.CMD_WAKEUP)
         # bsp_delayus(25)
         ussleep(250000)
 
@@ -199,10 +199,10 @@ def ads1256_isr(config={}):
         ads1256_setdiffchannel(config.Channel)
         # bsp_delayus(5)
 
-        ads1256_writecmd(libaddapy.CMD_SYNC)
+        ads1256_writecmd(libads1256.CMD_SYNC)
         # bsp_delayus(5)
 
-        ads1256_writecmd(libaddapy.CMD_WAKEUP)
+        ads1256_writecmd(libads1256.CMD_WAKEUP)
         # bsp_delayus(25)
 
         if config.Channel == 0:
@@ -221,10 +221,10 @@ def ads1256_isr(config={}):
         ads1256_setchannel(ADS1256_VAR_T.Channel)
         # bsp_delayus(5)
 
-        ads1256_writecmd(libaddapy.CMD_SYNC)
+        ads1256_writecmd(libads1256.CMD_SYNC)
         # bsp_delayus(5)
 
-        ads1256_writecmd(libaddapy.CMD_WAKEUP)
+        ads1256_writecmd(libads1256.CMD_WAKEUP)
         # bsp_delayus(25)
 
         if ADS1256_VAR_T.Channel == 0:
@@ -242,10 +242,10 @@ def ads1256_isr(config={}):
         ads1256_setdiffchannel(ADS1256_VAR_T.Channel)
         # bsp_delayus(5)
 
-        ads1256_writecmd(libaddapy.CMD_SYNC)
+        ads1256_writecmd(libads1256.CMD_SYNC)
         # bsp_delayus(5)
 
-        ads1256_writecmd(libaddapy.CMD_WAKEUP)
+        ads1256_writecmd(libads1256.CMD_WAKEUP)
         # bsp_delayus(25)
 
         if ADS1256_VAR_T.Channel == 0:
@@ -263,7 +263,7 @@ def ads1256_isr(config={}):
 def ads1256_setchannel(_ch=0):
     if _ch > 7:
         return
-    ads1256_writereg(libaddapy.REG_MUX, (_ch << 4) | (1 << 3))
+    ads1256_writereg(libads1256.REG_MUX, (_ch << 4) | (1 << 3))
 
 def ads1256_readdata():
     read = 0
@@ -271,7 +271,7 @@ def ads1256_readdata():
 
     cs_0()
     
-    ads1256_send8bit(libaddapy.CMD_RDATA)
+    ads1256_send8bit(libads1256.CMD_RDATA)
     # ads1256_delaydata()
     ussleep(10000)
 
@@ -292,22 +292,22 @@ def ads1256_readdata():
 
 def ads1256_setdiffchannel(_ch):
     if _ch == 0:
-        ads1256_writereg(libaddapy.REG_MUX, (0 << 4) | 1)
+        ads1256_writereg(libads1256.REG_MUX, (0 << 4) | 1)
 
     elif _ch == 1:
-        ads1256_writereg(libaddapy.REG_MUX, (2 << 4) | 3)
+        ads1256_writereg(libads1256.REG_MUX, (2 << 4) | 3)
 
     elif _ch == 2:
-        ads1256_writereg(libaddapy.REG_MUX, (4 << 4) | 5)
+        ads1256_writereg(libads1256.REG_MUX, (4 << 4) | 5)
 
     elif _ch == 3:
-        ads1256_writereg(libaddapy.REG_MUX, (6 << 4) | 7)
+        ads1256_writereg(libads1256.REG_MUX, (6 << 4) | 7)
         
     return
 
 def ads1256_writereg(_regid, _regvalue):
     cs_0()
-    ads1256_send8bit(libaddapy.CMD_WREG | _regid)
+    ads1256_send8bit(libads1256.CMD_WREG | _regid)
     ads1256_send8bit(0x00)
 
     ads1256_send8bit(_regvalue)
@@ -350,8 +350,8 @@ def ads1256_adc():
     for i in range(ch_num):
         d['CH{0}'.format(i+1)] = val[i]
     
-    libaddapy.spi_end()
-    libaddapy.close()
+    libads1256.spi_end()
+    libads1256.close()
 
     return d
     
